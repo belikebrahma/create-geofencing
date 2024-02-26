@@ -22,6 +22,8 @@ class App extends Component {
       fence: null,
       watchID: null,
       lastFetched: null,
+      jsonOutput: null, // Added state for JSON output
+
     };
   }
 
@@ -95,6 +97,32 @@ class App extends Component {
       }),
     });
 
+    console.log('Polygon Coordinates:');
+    polygon.getPaths().forEach((path, index) => {
+      console.log(`Path ${index + 1}:`);
+      path.getArray().forEach((point, pointIndex) => {
+        console.log(`Point ${pointIndex + 1}: lat: ${point.lat()}, lng: ${point.lng()}`);
+      });
+    });
+
+    const generateCoordinateArray = () => {
+      const coordinateArray = [];
+      polygon.getPaths().forEach(poly => {
+          const coordinates = parseCoordinates(poly.getArray());
+          coordinates.forEach(coord => {
+              coordinateArray.push(coord);
+          });
+      });
+      return coordinateArray;
+    };
+
+    console.log(generateCoordinateArray());
+    const jsonOutput = JSON.stringify(generateCoordinateArray(), null, 2);
+
+    this.setState({ jsonOutput }); // Set JSON output in state
+
+    
+
     this.checkGeofence();
   }
 
@@ -106,14 +134,6 @@ class App extends Component {
   render() {
     let map = null;
     let fenceStatus = null;
-
-    if (this.state.fence) {
-      if (this.state.insideFence) {
-        fenceStatus = <p>You are inside the fence.</p>;
-      } else {
-        fenceStatus = <p>You are outside the fence.</p>;
-      }
-    }
 
     if (this.state.lastFetched) {
       map = (<div>
@@ -144,9 +164,24 @@ class App extends Component {
       <div className="App">
         {map}
         {fenceStatus}
+
+        <div id="jsonOutput">
+          <pre>{this.state.jsonOutput}</pre>
+        </div>
       </div>
     );
   }
+}
+
+function parseCoordinates(coordinates) {
+  const result = [];
+  for (let index = 0; index < coordinates.length; index++) {
+      result.push({
+          lat: Number(coordinates[index].lat()),
+          lng: Number(coordinates[index].lng())
+      });
+  }
+  return result;
 }
 
 export default App;
